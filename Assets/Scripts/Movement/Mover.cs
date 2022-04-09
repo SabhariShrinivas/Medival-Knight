@@ -4,22 +4,23 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using RPG.Core;
-
+using RPG.Core;
 namespace RPG.Movement
 {
     public class Mover : MonoBehaviour, IAction
     {
-      //  [SerializeField] Transform target;
-
+        Health health;
         NavMeshAgent navMeshAgent;
         Animator animator;
         void Start()
         {
+            health = GetComponent<Health>();
             navMeshAgent = GetComponent<NavMeshAgent>();
             animator = GetComponent<Animator>();
         }
         void Update()
         {
+           navMeshAgent.enabled = !health.isDead();
             UpdateAnimator();
         }
         public void StartMoveAction(Vector3 destination) //move the player as well but only called while moving after handling different interaction like attacking to cancel the attack and start to move
