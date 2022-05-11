@@ -1,24 +1,50 @@
-using System.Collections;
-using System.Collections.Generic;
+
 using UnityEngine;
 using RPG.Movement;
 using RPG.Core;
+using System;
+using RPG.Saving;
+using RPG.Attributes;
+using RPG.Stats;
+using System.Collections.Generic;
+using GameDevTV.Utils;
 
 namespace RPG.Combat
 {
-    public class Fighter : MonoBehaviour, IAction
+    public class Fighter : MonoBehaviour, IAction, ISaveable, IModifierProvider
     {
-        [SerializeField] float weaponRange = 2f, timeBetweenAtacks = 3f;
-        [SerializeField] int weaponDamage = 15;
+        [SerializeField] float timeBetweenAtacks = 3f;
+        [SerializeField] Transform righthandTransform;
+        [SerializeField] Transform lefthandTransform;
+        [SerializeField] Weapon defaultWeapon;
+        [SerializeField] String defaultWeaponName = "Unarmed";
+        LazyValue<Weapon> currentWeapon;
         Health target;
         Mover mover;
         Animator anim;
         float timeSinceLastAttack = Mathf.Infinity;
-        private void Start()
+
+ 
+        private void Awake()
         {
             mover = GetComponent<Mover>();
             anim = GetComponent<Animator>();
+            currentWeapon = new LazyValue<Weapon>(SetDefaultWeapon);
         }
+
+        private Weapon SetDefaultWeapon()
+        {
+            AttachWeapon(defaultWeapon);
+            return defaultWeapon;
+        }
+
+        private void Start()
+        {
+            currentWeapon.ForceInit();
+          //  Weapon weapon = Resources.Load<Weapon>(defaultWeaponName);
+           // EquipWeapon(defaultWeapon);
+        }
+
         private void Update()
         {
             timeSinceLastAttack += Time.deltaTime;
@@ -29,13 +55,27 @@ namespace RPG.Combat
             }
             if (!GetIsInRange())
             {
-                mover.MoveTo(target.transform.position);
+                mover.MoveTo(target.transform.position, 1f);
             }
             else
             {
                 mover.Cancel();
                 AttackBehaviour();
             }
+        }
+        public void EquipWeapon(Weapon weapon)
+        {
+            if (weapon)
+            {
+                currentWeapon.value = weapon;
+                AttachWeapon(weapon);
+            }
+
+        }
+
+        private void AttachWeapon(Weapon weapon)
+        {
+            weapon.Spawn(righthandTransform, lefthandTransform, anim);
         }
 
         private void AttackBehaviour()
@@ -48,7 +88,10 @@ namespace RPG.Combat
             }
 
         }
-
+        public Health GetTarget()
+        {
+            return target;
+        }
         private void TriggerAttack()
         {
             anim.ResetTrigger("stopAttack");
@@ -57,7 +100,9 @@ namespace RPG.Combat
 
         private bool GetIsInRange()
         {
-            return Vector3.Distance(transform.position, target.transform.position) < weaponRange;
+            if (currentWeapon.value)
+                return Vector3.Distance(transform.position, target.transform.position) < currentWeapon.value.GetRange();
+            else return false;
         }
 
         public void Attack(GameObject combatTarget)
@@ -75,6 +120,7 @@ namespace RPG.Combat
         {
             StopAttack();
             target = null;
+            GetComponent<Mover>().Cancel();
 
         }
 
@@ -83,13 +129,57 @@ namespace RPG.Combat
             anim.ResetTrigger("attack");
             anim.SetTrigger("stopAttack");
         }
-
+        public IEnumerable<float> GetAdditiveModifiers(Stat stat)
+        {
+            if(stat == Stat.Damage)
+            {
+                yield return currentWeapon.value.GetDamage();
+            }
+        }
+        public IEnumerable<float> GetPercentageModifiers(Stat stat)
+        {
+            if (stat == Stat.Damage)
+            {
+                yield return currentWeapon.value.GetPercentageBonus();
+            }
+        }
         void Hit() // Triggered by animation event
         {
             if (target == null) return;
-            target.TakeDamage(weaponDamage);
+             float damage = GetComponent<BaseStats>().GetStat(Stat.Damage);
+            print($"{gameObject.name} dealt : {damage} damage");
+            if (currentWeapon.value.hasProjectile())
+            {
+                currentWeapon.value.LauchProjectile(righthandTransform, lefthandTransform, target, gameObject, damage);
+            }
+            else
+            {
+                if (currentWeapon.value)
+                    target.TakeDamage(gameObject, damage);
+            }
+            
+        }
+        void Shoot() // Triggered by animation event
+        {
+            Hit();
         }
 
+        public object CaptureState()
+        {
+            return currentWeapon.value.name;
+        }
 
+        public void RestoreState(object state)
+        {
+            string weaponName = state.ToString();
+            Weapon weapon = Resources.Load<Weapon>(weaponName);
+            if (weapon != null)
+            {
+                 EquipWeapon(weapon);
+            }
+           
+        }
+
+        
     }
 }

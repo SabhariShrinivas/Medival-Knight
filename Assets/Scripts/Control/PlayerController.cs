@@ -1,10 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
+
 using UnityEngine;
 using RPG.Movement;
 using RPG.Combat;
-using RPG.Core;
-using System;
+using RPG.Attributes;
 
 
 namespace RPG.Control
@@ -15,7 +13,7 @@ namespace RPG.Control
         private CombatTarget target;
         Health health;
         // Start is called before the first frame update
-        void Start()
+        void Awake()
         {
             mover = GetComponent<Mover>();
             health = GetComponent<Health>();
@@ -27,7 +25,6 @@ namespace RPG.Control
             if (health.isDead()) return;
             if(InteractWithCombat()) return;
             if(InteractWithMovement()) return;
-            print("nothing to do");
                
                       
         }
@@ -60,7 +57,7 @@ namespace RPG.Control
             {
                 if (Input.GetMouseButton(0))
                 {
-                    mover.StartMoveAction(hitInfo.point);
+                    mover.StartMoveAction(hitInfo.point, 1f);
                 }              
                 return true;
             }

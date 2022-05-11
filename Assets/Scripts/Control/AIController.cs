@@ -1,10 +1,9 @@
-using System.Collections;
-using System.Collections.Generic;
+
 using UnityEngine;
 using RPG.Combat;
 using RPG.Movement;
 using RPG.Core;
-using System;
+using RPG.Attributes;
 
 namespace RPG.Control
 {
@@ -15,6 +14,7 @@ namespace RPG.Control
         [SerializeField] PatrolPath patrolPath;
         [SerializeField] float WaypointTolerance;
         [SerializeField] float waypointDwellTime = 3f;
+        [Range(0, 1)][SerializeField] float patrolSpeedFraction = 0.2f;
         int CurrentWaypointIndex = 0;
         GameObject player;
         Fighter fighter;
@@ -23,12 +23,16 @@ namespace RPG.Control
         Vector3 guardPosition;
         float timeSinceLastsawPlayer = Mathf.Infinity;
         float timeSinceArrivedAtWaypoint = Mathf.Infinity;
-        private void Start()
+        private void Awake()
         {
             player = GameObject.FindWithTag("Player");
             fighter = GetComponent<Fighter>();
             health = GetComponent<Health>();
             mover = GetComponent<Mover>();
+        }
+        private void Start()
+        {
+            
             guardPosition = transform.position;
         }
         private void Update()
@@ -69,7 +73,7 @@ namespace RPG.Control
             }
             if(timeSinceArrivedAtWaypoint > waypointDwellTime)
             {
-                mover.StartMoveAction(nextPosition);
+                mover.StartMoveAction(nextPosition, patrolSpeedFraction);
             }   
         }
 
