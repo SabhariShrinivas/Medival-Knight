@@ -7,6 +7,7 @@ namespace RPG.SceneManagement
     public class Fader : MonoBehaviour
     {
         CanvasGroup canvas;
+        Coroutine currentActiveFade;
         // Start is called before the first frame update
         void Awake()
         {
@@ -16,24 +17,30 @@ namespace RPG.SceneManagement
         {
             canvas.alpha = 1;
         }
-        IEnumerator FadeOutIn()
+        public Coroutine FadeOut(float time)
         {
-            yield return FadeOut(3f);
-            yield return FadeIn(1f);
+            return Fade(1, time);
+
         }
-        public IEnumerator FadeOut(float time) 
+        public Coroutine FadeIn(float time)
         {
-            while(canvas.alpha < 1)
+            return Fade(0, time);
+        }
+        public Coroutine Fade(float target, float time)
+        {
+            if (currentActiveFade != null)
             {
-                canvas.alpha += Time.deltaTime / time;
-                yield return null;
+                StopCoroutine(currentActiveFade);
             }
+            currentActiveFade = StartCoroutine(FadeRoutine(target, time));
+            return currentActiveFade;
         }
-        public IEnumerator FadeIn(float time)
+
+        private IEnumerator FadeRoutine(float target, float time)
         {
-            while (canvas.alpha > 0)
+            while(!Mathf.Approximately(canvas.alpha, target))
             {
-                canvas.alpha -= Time.deltaTime / time;
+                canvas.alpha = Mathf.MoveTowards(canvas.alpha, target, Time.deltaTime / time);
                 yield return null;
             }
         }

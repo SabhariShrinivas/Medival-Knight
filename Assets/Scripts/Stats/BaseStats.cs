@@ -1,3 +1,4 @@
+using GameDevTV.Utils;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -13,12 +14,13 @@ namespace RPG.Stats
         [SerializeField] Progression progression;
         [SerializeField] GameObject levelUpEffect;
         [SerializeField] bool shouldUseModifier = false;
-        int currentLevel = 1;
+        LazyValue<int> currentLevel;
         public event Action OnLevelUp;
         Experience experience;
         private void Awake()
         {
             experience = GetComponent<Experience>();
+            currentLevel = new LazyValue<int>(CalculateLevel);
         }
         private void OnEnable()
         {
@@ -36,7 +38,7 @@ namespace RPG.Stats
         }
         private void Start()
         {
-            currentLevel = CalculateLevel();
+            currentLevel.ForceInit();
                    
         }
         ///<summary>
@@ -46,9 +48,9 @@ namespace RPG.Stats
         {
             ///updates level
             int newLevel = CalculateLevel();
-            if(newLevel > currentLevel)
+            if(newLevel > currentLevel.value)
             {
-                currentLevel = newLevel;
+                currentLevel.value = newLevel;
                 LevelUpEffect();
                 OnLevelUp?.Invoke();
             }
@@ -100,11 +102,7 @@ namespace RPG.Stats
 
         public int GetLevel()
         { 
-            if(currentLevel < 1)
-            {
-                currentLevel = CalculateLevel();
-            }
-            return currentLevel;
+            return currentLevel.value;
         }
         public int CalculateLevel()
         {
