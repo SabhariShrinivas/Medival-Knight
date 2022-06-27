@@ -14,6 +14,7 @@ namespace RPG.Movement
         NavMeshAgent navMeshAgent;
         Animator animator;
         [SerializeField] float maxSpeed = 6f;
+        [SerializeField] private float maxNavPathLengeth = 10f;
 
         private void Awake()
         {
@@ -41,6 +42,14 @@ namespace RPG.Movement
             navMeshAgent.SetDestination(destination);
             navMeshAgent.speed = maxSpeed * Mathf.Clamp01(speedFraction);
         }
+        public bool CanMoveTo(Vector3 destination)
+        {
+            NavMeshPath path = new NavMeshPath();
+            bool haspath = NavMesh.CalculatePath(transform.position, destination, NavMesh.AllAreas, path);
+            if (path.status != NavMeshPathStatus.PathComplete) return false; // if navmesh is not reachable, for example navmesh present on top of a flat surface such as roof of a building, then player should not be able to move
+            if (GetPathLength(path) >= maxNavPathLengeth) return false;
+            return true;
+        }
 
         public void Cancel()
         {
@@ -53,7 +62,16 @@ namespace RPG.Movement
             float speed = velocity.z;
             animator.SetFloat("forwardspeed", speed);
         }
-
+        private float GetPathLength(NavMeshPath path)
+        {
+            float distance = 0;
+            if (path.corners.Length < 2) return distance;
+            for (int i = 0; i < path.corners.Length - 1; i++)
+            {
+                distance += Vector3.Distance(path.corners[i], path.corners[i + 1]);
+            }
+            return distance;
+        }
         public object CaptureState()
         {
             return new SerializableVector3(transform.position);

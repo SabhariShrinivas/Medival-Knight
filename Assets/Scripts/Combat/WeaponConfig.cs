@@ -26,9 +26,12 @@ namespace RPG.Combat
                 weapon = Instantiate(equippedPrefab, handTransform);
                 weapon.gameObject.name = weaponName;
             }
+            else
+            {
+                Debug.Log($"WeaponConfig {name} does not have an equippedPrefab assigned.");
+            }
             if (animatorOverride != null)
                 animator.runtimeAnimatorController = animatorOverride;
-            Debug.Log(weapon.gameObject.name);
             return weapon;
         }
 

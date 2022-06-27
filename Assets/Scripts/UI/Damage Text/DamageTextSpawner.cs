@@ -11,9 +11,8 @@ namespace RPG.UI.DamageText
         [SerializeField] DamageText damageTextPrefab;
         void Start()
         {
-            Spawn(11);
         }
-        public void Spawn(float damageAmount)
+        public void Spawn(float damageAmount) //called by unity Event
         {
             DamageText instance = Instantiate(damageTextPrefab, transform);
             instance.SetValue(damageAmount);

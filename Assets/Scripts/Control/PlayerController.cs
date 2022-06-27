@@ -24,7 +24,8 @@ namespace RPG.Control
         }
         [SerializeField] cursorMapping[] cursorMappings;
         [SerializeField] float maxNavMeshProjectionDistance = 1f;
-        [SerializeField] private float maxNavPathLengeth = 10f;
+        [SerializeField] float rayCastRadius = 1f;
+
 
         // Start is called before the first frame update
         void Awake()
@@ -77,7 +78,7 @@ namespace RPG.Control
         }
         private RaycastHit[] RaycastAllSorted()
         {
-            RaycastHit[] hits = Physics.RaycastAll(GetMouseRay());
+            RaycastHit[] hits = Physics.SphereCastAll(GetMouseRay(), rayCastRadius);
             float[] distances = new float[hits.Length];
             for (int i = 0; i < hits.Length; i++)
             {
@@ -92,6 +93,10 @@ namespace RPG.Control
             bool hasHit = RaycastNavMesh(out target);
             if (hasHit)
             {
+                if (!mover.CanMoveTo(target))
+                {
+                    return false;
+                }
                 if (Input.GetMouseButton(0))
                 {
                     mover.StartMoveAction(target, 1f);
@@ -110,24 +115,11 @@ namespace RPG.Control
             NavMeshHit hit;
             bool hasCastToNavMesh = NavMesh.SamplePosition(hitInfo.point, out hit, maxNavMeshProjectionDistance, NavMesh.AllAreas);
             if (!hasCastToNavMesh) return false;
-            target = hit.position;
-            NavMeshPath path = new NavMeshPath();
-            bool haspath = NavMesh.CalculatePath(transform.position, target, NavMesh.AllAreas, path);
-            if (path.status != NavMeshPathStatus.PathComplete) return false; // if navmesh is not reachable, for example navmesh present on top of a flat surface such as roof of a building, then player should not be able to move
-            if (GetPathLength(path) >= maxNavPathLengeth) return false;
+            target = hit.position; 
             return true;
         }
 
-        private float GetPathLength(NavMeshPath path)
-        {
-            float distance = 0;
-            if (path.corners.Length < 2) return distance;
-            for (int i = 0; i < path.corners.Length - 1; i++)
-            {
-                distance += Vector3.Distance(path.corners[i], path.corners[i+1]);
-            }
-            return distance;
-        }
+       
 
         private void SetCursor(CursorType type)
         {

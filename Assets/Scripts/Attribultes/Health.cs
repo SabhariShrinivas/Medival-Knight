@@ -29,6 +29,9 @@ namespace RPG.Attributes
         {
             healthPoints = new LazyValue<float>(GetInitialHealth);
         }
+
+        
+
         private float GetInitialHealth()
         {
             return GetComponent<BaseStats>().GetStat(Stat.Health);
@@ -85,7 +88,10 @@ namespace RPG.Attributes
                 hasDied = true;
             }
         }
-
+        public void Heal(float healthToRestore)
+        {
+            healthPoints.value = Mathf.Min(healthToRestore + healthPoints.value, GetMaxHealthPoints());
+        }
         private void AwardExperience(GameObject instigator)
         {
             Experience experience = instigator.GetComponent<Experience>();

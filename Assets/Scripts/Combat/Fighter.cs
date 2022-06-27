@@ -85,7 +85,7 @@ namespace RPG.Combat
             transform.LookAt(target.transform, Vector3.up);
             if(timeSinceLastAttack > timeBetweenAtacks)
             {
-                TriggerAttack();AttachWeapon(defaultWeapon);
+                TriggerAttack();
                 timeSinceLastAttack = 0;
             }
 
@@ -115,6 +115,7 @@ namespace RPG.Combat
         public bool CanAttack(GameObject combatTarget)
         {
             if (combatTarget == null) return false;
+            if (!mover.CanMoveTo(combatTarget.transform.position)) return false; 
             Health target = combatTarget.GetComponent<Health>();
             return target != null && !target.isDead();
         }
@@ -149,7 +150,7 @@ namespace RPG.Combat
         {
             if (target == null) return;
              float damage = GetComponent<BaseStats>().GetStat(Stat.Damage);
-           // if(currentWeapon.value != null)
+            if(currentWeapon.value != null)
                 currentWeapon.value.OnHit();
             if (currentWeaponConfig.hasProjectile())
             {
